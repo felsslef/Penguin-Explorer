@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐧 Penguin Explorer — Arquipélago Palmer</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1f2937;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --adelie: #FF6B6B;
+      --chinstrap: #4ECDC4;
+      --gentoo: #45B7D1;
+      --accent: #58a6ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 50%, #0d1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% -20%, rgba(88,166,255,0.12) 0%, transparent 70%);
+    }
+    header h1 {
+      font-size: 2rem; font-weight: 700;
+      background: linear-gradient(135deg, #58a6ff, #4ECDC4, #FF6B6B);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--text-muted); margin-top: 6px; font-size: 0.95rem;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    .container {
+      max-width: 1400px; margin: 0 auto; padding: 32px 24px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 28px;
+    }
+
+    /* ── SIDEBAR / FILTERS ───────────────────────────────── */
+    .sidebar {
+      position: sticky; top: 24px; align-self: start;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 16px;
+    }
+
+    /* toggle buttons */
+    .toggle-group {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .toggle-btn {
+      padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--text-muted);
+      cursor: pointer; transition: all .2s;
+    }
+    .toggle-btn:hover { border-color: var(--accent); color: var(--text); }
+    .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .toggle-btn.island-biscoe.active   { background: var(--gentoo); border-color: var(--gentoo); }
+    .toggle-btn.island-dream.active    { background: var(--chinstrap); border-color: var(--chinstrap); }
+    .toggle-btn.island-torgersen.active{ background: var(--adelie); border-color: var(--adelie); }
+    .toggle-btn.sex-male.active   { background: #7c3aed; border-color: #7c3aed; }
+    .toggle-btn.sex-female.active { background: #db2777; border-color: #db2777; }
+
+    /* range sliders */
+    .range-group { margin-bottom: 18px; }
+    .range-label {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .range-label span { font-size: 0.88rem; color: var(--text); }
+    .range-label .range-val {
+      font-size: 0.8rem; color: var(--accent);
+      background: rgba(88,166,255,0.1);
+      padding: 2px 8px; border-radius: 6px; font-weight: 600;
+    }
+    .range-enabled-label {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* custom dual range slider */
+    .slider-wrap {
+      position: relative; height: 28px;
+    }
+    .slider-track {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      left: 0; right: 0; height: 4px;
+      background: var(--border); border-radius: 4px;
+    }
+    .slider-fill {
+      position: absolute; height: 4px; top: 0;
+      background: var(--accent); border-radius: 4px;
+    }
+    .slider-wrap input[type=range] {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 100%; height: 4px;
+      background: transparent; outline: none;
+      -webkit-appearance: none; pointer-events: none;
+    }
+    .slider-wrap input[type=range].disabled-range { opacity: 0.3; }
+    .slider-wrap input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; pointer-events: all;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--accent); border: 2px solid #0d1117;
+      cursor: pointer; box-shadow: 0 2px 6px rgba(88,166,255,0.4);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .slider-wrap input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2); box-shadow: 0 2px 12px rgba(88,166,255,0.6);
+    }
+
+    /* enable checkbox */
+    .filter-toggle {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer;
+    }
+    .filter-toggle input { width: 16px; height: 16px; accent-color: var(--accent); }
+    .filter-toggle span { font-size: 0.82rem; color: var(--text-muted); }
+
+    .reset-btn {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px dashed var(--border); background: transparent;
+      color: var(--text-muted); cursor: pointer; font-size: 0.85rem;
+      transition: all .2s;
+    }
+    .reset-btn:hover {
+      border-color: var(--adelie); color: var(--adelie);
+    }
+
+    /* ── MAIN ────────────────────────────────────────────── */
+    .main { display: flex; flex-direction: column; gap: 20px; }
+
+    /* summary bar */
+    .summary-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .summary-total {
+      font-size: 2.4rem; font-weight: 800;
+      color: var(--accent); line-height: 1;
+    }
+    .summary-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .summary-bar-divider { width: 1px; height: 40px; background: var(--border); margin: 0 4px; }
+    .summary-right { flex: 1; }
+
+    /* probability bar */
+    .prob-bar-wrap { margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+    .prob-label { font-size: 0.82rem; width: 90px; font-weight: 500; }
+    .prob-bar-bg {
+      flex: 1; height: 10px; background: var(--surface2); border-radius: 10px; overflow: hidden;
+    }
+    .prob-bar-fill {
+      height: 100%; border-radius: 10px;
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    }
+    .prob-pct { font-size: 0.78rem; color: var(--text-muted); width: 44px; text-align: right; font-weight: 600; }
+
+    /* species cards */
+    .species-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    .species-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 20px;
+      transition: all 0.3s cubic-bezier(.4,0,.2,1);
+      position: relative; overflow: hidden;
+    }
+    .species-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .species-card.adelie::before   { background: var(--adelie); }
+    .species-card.chinstrap::before{ background: var(--chinstrap); }
+    .species-card.gentoo::before   { background: var(--gentoo); }
+    .species-card.dominant {
+      border-color: rgba(255,255,255,0.15);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+      transform: translateY(-3px);
+    }
+    .species-card.hidden { opacity: 0.2; filter: grayscale(1); transform: scale(0.97); }
+
+    .species-card-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .species-emoji { font-size: 1.8rem; }
+    .species-name { font-size: 1rem; font-weight: 700; }
+    .species-badge {
+      margin-left: auto; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .species-count { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .species-pct { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; margin-bottom: 14px; }
+
+    .stat-row {
+      display: flex; flex-direction: column; gap: 6px; margin-top: 12px;
+    }
+    .stat-item {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.78rem; padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-bottom: none; }
+    .stat-key { color: var(--text-muted); }
+    .stat-val { font-weight: 600; font-size: 0.8rem; }
+
+    .island-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 0.7rem; font-weight: 600; margin-right: 4px; margin-top: 4px;
+    }
+
+    /* no results */
+    .no-results {
+      text-align: center; padding: 60px 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .no-results .emoji { font-size: 3rem; display: block; margin-bottom: 12px; }
+    .no-results h3 { color: var(--text-muted); font-weight: 400; }
+
+    /* loading pulse */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .loading { animation: pulse 1s infinite; }
+
+    /* WINNER badge */
+    .winner-badge {
+      background: gold; color: #000;
+      font-size: 0.65rem; padding: 2px 7px; border-radius: 10px;
+      font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    @media(max-width:900px){
+      .container { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .species-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🐧 Penguin Explorer</h1>
+  <p>Arquipélago Palmer, Antártida — Niching de espécies em tempo real</p>
+</header>
+
+<div class="container">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <div class="card">
+      <div class="card-title">🏝️ Ilha</div>
+      <div class="toggle-group" id="island-group">
+        <button class="toggle-btn active" data-val="all">Todas</button>
+        <button class="toggle-btn island-biscoe" data-val="Biscoe">Biscoe</button>
+        <button class="toggle-btn island-dream" data-val="Dream">Dream</button>
+        <button class="toggle-btn island-torgersen" data-val="Torgersen">Torgersen</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚥ Sexo</div>
+      <div class="toggle-group" id="sex-group">
+        <button class="toggle-btn active" data-val="all">Todos</button>
+        <button class="toggle-btn sex-male" data-val="male">♂ Macho</button>
+        <button class="toggle-btn sex-female" data-val="female">♀ Fêmea</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📏 Medições Biométricas</div>
+
+      <!-- Bill Length -->
+      <div class="range-group">
+        <label class="filter-toggle">
+          <input type="checkbox" id="enable-bill-length"> 
+          <span>Comprimento do bico (mm)</span>
+        </label>
+        <div class="range-label">
+          <span>bill_length_mm</span>
+          <span class="range-val" id="val-bill-length">—</span>
+        </div>
+        <div class="slider-wrap" id="wrap-bill-length">
+          <div class="slider-track"><div class="slider-fill" id="fill-bill-length"></div></div>
+          <input type="range" class="disabled-range" id="min-bill-length"
+            min="{{ ranges.bill_length_mm.min }}" max="{{ ranges.bill_length_mm.max }}"
+            step="{{ ranges.bill_length_mm.step }}" value="{{ ranges.bill_length_mm.min }}" disabled>
+          <input type="range" class="disabled-range" id="max-bill-length"
+            min="{{ ranges.bill_length_mm.min }}" max="{{ ranges.bill_length_mm.max }}"
+            step="{{ ranges.bill_length_mm.step }}" value="{{ ranges.bill_length_mm.max }}" disabled>
+        </div>
+      </div>
+
+      <!-- Bill Depth -->
+      <div class="range-group">
+        <label class="filter-toggle">
+          <input type="checkbox" id="enable-bill-depth">
+          <span>Profundidade do bico (mm)</span>
+        </label>
+        <div class="range-label">
+          <span>bill_depth_mm</span>
+          <span class="range-val" id="val-bill-depth">—</span>
+        </div>
+        <div class="slider-wrap" id="wrap-bill-depth">
+          <div class="slider-track"><div class="slider-fill" id="fill-bill-depth"></div></div>
+          <input type="range" class="disabled-range" id="min-bill-depth"
+            min="{{ ranges.bill_depth_mm.min }}" max="{{ ranges.bill_depth_mm.max }}"
+            step="{{ ranges.bill_depth_mm.step }}" value="{{ ranges.bill_depth_mm.min }}" disabled>
+          <input type="range" class="disabled-range" id="max-bill-depth"
+            min="{{ ranges.bill_depth_mm.min }}" max="{{ ranges.bill_depth_mm.max }}"
+            step="{{ ranges.bill_depth_mm.step }}" value="{{ ranges.bill_depth_mm.max }}" disabled>
+        </div>
+      </div>
+
+      <!-- Flipper -->
+      <div class="range-group">
+        <label class="filter-toggle">
+          <input type="checkbox" id="enable-flipper">
+          <span>Comprimento da nadadeira (mm)</span>
+        </label>
+        <div class="range-label">
+          <span>flipper_length_mm</span>
+          <span class="range-val" id="val-flipper">—</span>
+        </div>
+        <div class="slider-wrap" id="wrap-flipper">
+          <div class="slider-track"><div class="slider-fill" id="fill-flipper"></div></div>
+          <input type="range" class="disabled-range" id="min-flipper"
+            min="{{ ranges.flipper_length_mm.min }}" max="{{ ranges.flipper_length_mm.max }}"
+            step="{{ ranges.flipper_length_mm.step }}" value="{{ ranges.flipper_length_mm.min }}" disabled>
+          <input type="range" class="disabled-range" id="max-flipper"
+            min="{{ ranges.flipper_length_mm.min }}" max="{{ ranges.flipper_length_mm.max }}"
+            step="{{ ranges.flipper_length_mm.step }}" value="{{ ranges.flipper_length_mm.max }}" disabled>
+        </div>
+      </div>
+
+      <!-- Body Mass -->
+      <div class="range-group">
+        <label class="filter-toggle">
+          <input type="checkbox" id="enable-mass">
+          <span>Massa corporal (g)</span>
+        </label>
+        <div class="range-label">
+          <span>body_mass_g</span>
+          <span class="range-val" id="val-mass">—</span>
+        </div>
+        <div class="slider-wrap" id="wrap-mass">
+          <div class="slider-track"><div class="slider-fill" id="fill-mass"></div></div>
+          <input type="range" class="disabled-range" id="min-mass"
+            min="{{ ranges.body_mass_g.min }}" max="{{ ranges.body_mass_g.max }}"
+            step="{{ ranges.body_mass_g.step }}" value="{{ ranges.body_mass_g.min }}" disabled>
+          <input type="range" class="disabled-range" id="max-mass"
+            min="{{ ranges.body_mass_g.min }}" max="{{ ranges.body_mass_g.max }}"
+            step="{{ ranges.body_mass_g.step }}" value="{{ ranges.body_mass_g.max }}" disabled>
+        </div>
+      </div>
+
+      <button class="reset-btn" id="reset-btn">↩ Resetar todos os filtros</button>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN ──────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Summary -->
+    <div class="summary-bar" id="summary-bar">
+      <div>
+        <div class="summary-total" id="total-count">344</div>
+        <div class="summary-label">registros encontrados</div>
+      </div>
+      <div class="summary-bar-divider"></div>
+      <div class="summary-right" id="prob-bars">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- Species Cards -->
+    <div class="species-grid" id="species-grid">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- No results -->
+    <div class="no-results" id="no-results" style="display:none">
+      <span class="emoji">🔍</span>
+      <h3>Nenhum pinguim encontrado com esses filtros.<br>Tente ampliar os intervalos.</h3>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const SPECIES_INFO = {{ species_info | tojson }};
+const SPECIES_ORDER = ["Adelie", "Chinstrap", "Gentoo"];
+const SPECIES_CLASS = { Adelie: "adelie", Chinstrap: "chinstrap", Gentoo: "gentoo" };
+const COLORS = { Adelie: "#FF6B6B", Chinstrap: "#4ECDC4", Gentoo: "#45B7D1" };
+
+let state = {
+  island: "all",
+  sex: "all",
+  enableBillLength: false, minBillLength: null, maxBillLength: null,
+  enableBillDepth: false, minBillDepth: null, maxBillDepth: null,
+  enableFlipper: false, minFlipper: null, maxFlipper: null,
+  enableMass: false, minMass: null, maxMass: null,
+};
+
+// ── Toggle buttons ──────────────────────────────────────
+function setupToggle(groupId, stateKey) {
+  document.getElementById(groupId).querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById(groupId).querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state[stateKey] = btn.dataset.val;
+      fetch_and_render();
+    });
+  });
+}
+setupToggle('island-group', 'island');
+setupToggle('sex-group', 'sex');
+
+// ── Dual range sliders ──────────────────────────────────
+const sliders = [
+  { id: 'bill-length', enableKey: 'enableBillLength', minKey: 'minBillLength', maxKey: 'maxBillLength' },
+  { id: 'bill-depth',  enableKey: 'enableBillDepth',  minKey: 'minBillDepth',  maxKey: 'maxBillDepth' },
+  { id: 'flipper',     enableKey: 'enableFlipper',    minKey: 'minFlipper',    maxKey: 'maxFlipper' },
+  { id: 'mass',        enableKey: 'enableMass',       minKey: 'minMass',       maxKey: 'maxMass' },
+];
+
+sliders.forEach(({ id, enableKey, minKey, maxKey }) => {
+  const checkbox = document.getElementById(`enable-${id}`);
+  const minEl = document.getElementById(`min-${id}`);
+  const maxEl = document.getElementById(`max-${id}`);
+  const valEl = document.getElementById(`val-${id}`);
+  const fillEl = document.getElementById(`fill-${id}`);
+
+  function updateFill() {
+    const min = parseFloat(minEl.min), max = parseFloat(minEl.max);
+    const lo = parseFloat(minEl.value), hi = parseFloat(maxEl.value);
+    const leftPct = (lo - min) / (max - min) * 100;
+    const rightPct = (hi - min) / (max - min) * 100;
+    fillEl.style.left = leftPct + '%';
+    fillEl.style.width = (rightPct - leftPct) + '%';
+    const unit = id === 'mass' ? 'g' : 'mm';
+    valEl.textContent = checkbox.checked ? `${lo} – ${hi} ${unit}` : '—';
+  }
+
+  checkbox.addEventListener('change', () => {
+    const on = checkbox.checked;
+    state[enableKey] = on;
+    [minEl, maxEl].forEach(el => {
+      el.disabled = !on;
+      el.classList.toggle('disabled-range', !on);
+    });
+    if (on) {
+      state[minKey] = parseFloat(minEl.value);
+      state[maxKey] = parseFloat(maxEl.value);
+    } else {
+      state[minKey] = null; state[maxKey] = null;
+    }
+    updateFill();
+    fetch_and_render();
+  });
+
+  [minEl, maxEl].forEach(el => {
+    el.addEventListener('input', () => {
+      let lo = parseFloat(minEl.value), hi = parseFloat(maxEl.value);
+      if (lo > hi) {
+        if (el === minEl) minEl.value = hi;
+        else maxEl.value = lo;
+        lo = parseFloat(minEl.value); hi = parseFloat(maxEl.value);
+      }
+      state[minKey] = lo; state[maxKey] = hi;
+      updateFill();
+      fetch_and_render();
+    });
+  });
+
+  updateFill();
+});
+
+// ── Reset ───────────────────────────────────────────────
+document.getElementById('reset-btn').addEventListener('click', () => {
+  // reset toggles
+  ['island-group','sex-group'].forEach(gid => {
+    document.getElementById(gid).querySelectorAll('.toggle-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === 'all');
+    });
+  });
+  state.island = 'all'; state.sex = 'all';
+
+  // reset sliders
+  sliders.forEach(({ id, enableKey, minKey, maxKey }) => {
+    const checkbox = document.getElementById(`enable-${id}`);
+    const minEl = document.getElementById(`min-${id}`);
+    const maxEl = document.getElementById(`max-${id}`);
+    checkbox.checked = false;
+    state[enableKey] = false; state[minKey] = null; state[maxKey] = null;
+    minEl.value = minEl.min; maxEl.value = maxEl.max;
+    minEl.disabled = true; maxEl.disabled = true;
+    minEl.classList.add('disabled-range'); maxEl.classList.add('disabled-range');
+    document.getElementById(`fill-${id}`).style.left = '0%';
+    document.getElementById(`fill-${id}`).style.width = '100%';
+    document.getElementById(`val-${id}`).textContent = '—';
+  });
+  fetch_and_render();
+});
+
+// ── API call ────────────────────────────────────────────
+let debounceTimer = null;
+function fetch_and_render() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const params = new URLSearchParams({ island: state.island, sex: state.sex });
+    if (state.enableBillLength) {
+      params.set('bill_length_mm', '1');
+      params.set('bill_length_min', state.minBillLength);
+      params.set('bill_length_max', state.maxBillLength);
+    }
+    if (state.enableBillDepth) {
+      params.set('bill_depth_mm', '1');
+      params.set('bill_depth_min', state.minBillDepth);
+      params.set('bill_depth_max', state.maxBillDepth);
+    }
+    if (state.enableFlipper) {
+      params.set('flipper_length_mm', '1');
+      params.set('flipper_min', state.minFlipper);
+      params.set('flipper_max', state.maxFlipper);
+    }
+    if (state.enableMass) {
+      params.set('body_mass_g', '1');
+      params.set('mass_min', state.minMass);
+      params.set('mass_max', state.maxMass);
+    }
+
+    fetch(`/api/filter?${params}`)
+      .then(r => r.json())
+      .then(data => render(data));
+  }, 80);
+}
+
+// ── Render ──────────────────────────────────────────────
+function render(data) {
+  const { total, species_counts, species_pct, stats } = data;
+  const grid = document.getElementById('species-grid');
+  const noRes = document.getElementById('no-results');
+  const totalEl = document.getElementById('total-count');
+  const probBars = document.getElementById('prob-bars');
+
+  totalEl.textContent = total;
+
+  // Prob bars
+  probBars.innerHTML = '';
+  const dominated = total > 0 ? Object.entries(species_pct).sort((a,b) => b[1]-a[1])[0][0] : null;
+  SPECIES_ORDER.forEach(sp => {
+    const pct = species_pct[sp] || 0;
+    probBars.innerHTML += `
+      <div class="prob-bar-wrap">
+        <span class="prob-label" style="color:${COLORS[sp]}">${sp}</span>
+        <div class="prob-bar-bg">
+          <div class="prob-bar-fill" style="width:${pct}%;background:${COLORS[sp]}"></div>
+        </div>
+        <span class="prob-pct">${pct}%</span>
+      </div>`;
+  });
+
+  if (total === 0) {
+    grid.style.display = 'none';
+    noRes.style.display = 'block';
+    return;
+  }
+  grid.style.display = 'grid';
+  noRes.style.display = 'none';
+
+  grid.innerHTML = '';
+  const sorted = [...SPECIES_ORDER].sort((a,b) => (species_pct[b]||0) - (species_pct[a]||0));
+
+  sorted.forEach((sp, idx) => {
+    const count = species_counts[sp] || 0;
+    const pct = species_pct[sp] || 0;
+    const s = stats[sp];
+    const info = SPECIES_INFO[sp];
+    const cls = SPECIES_CLASS[sp];
+    const isDominant = idx === 0 && pct > 50;
+    const isHidden = count === 0;
+
+    const islandsHtml = s ? Object.entries(s.islands).map(([isl, cnt]) =>
+      `<span class="island-pill" style="background:rgba(255,255,255,0.08);color:var(--text-muted)">${isl} (${cnt})</span>`
+    ).join('') : '';
+
+    const winnerBadge = (isDominant && pct < 100) ? '<span class="winner-badge">🏆 Mais provável</span>' : (pct === 100 ? '<span class="winner-badge">✅ Identificado!</span>' : '');
+
+    const statsHtml = s ? `
+      <div class="stat-row">
+        <div class="stat-item"><span class="stat-key">🦢 Bico (comp.)</span><span class="stat-val">${s.bill_length.min}–${s.bill_length.max} <small>mm</small></span></div>
+        <div class="stat-item"><span class="stat-key">📐 Bico (prof.)</span><span class="stat-val">${s.bill_depth.min}–${s.bill_depth.max} <small>mm</small></span></div>
+        <div class="stat-item"><span class="stat-key">🏊 Nadadeira</span><span class="stat-val">${s.flipper.min}–${s.flipper.max} <small>mm</small></span></div>
+        <div class="stat-item"><span class="stat-key">⚖️ Peso</span><span class="stat-val">${s.mass.min}–${s.mass.max} <small>g</small></span></div>
+        <div class="stat-item"><span class="stat-key">🏝️ Ilhas</span><span class="stat-val">${islandsHtml}</span></div>
+      </div>` : '<p style="color:var(--text-muted);font-size:.8rem;margin-top:10px">Nenhum registro neste filtro</p>';
+
+    grid.innerHTML += `
+      <div class="species-card ${cls} ${isDominant ? 'dominant' : ''} ${isHidden ? 'hidden' : ''}">
+        <div class="species-card-header">
+          <span class="species-emoji">🐧</span>
+          <span class="species-name" style="color:${COLORS[sp]}">${sp}</span>
+          ${winnerBadge}
+        </div>
+        <div class="species-count" style="color:${COLORS[sp]}">${count}</div>
+        <div class="species-pct">${pct}% dos resultados filtrados</div>
+        <p style="font-size:.78rem;color:var(--text-muted);line-height:1.5">${info.desc}</p>
+        ${statsHtml}
+      </div>`;
+  });
+}
+
+// ── Init ────────────────────────────────────────────────
+fetch_and_render();
+</script>
+</body>
+</html>

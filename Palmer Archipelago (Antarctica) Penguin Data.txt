@@ -1,0 +1,19 @@
+﻿Identificação dos Alunos
+* Aluno 1: Felipe Pastore Cursino
+* Aluno 2: Leticia Pacheco Cabral
+Conjunto de Dados (Dataset)
+* Nome do Dataset: Palmer Archipelago (Antarctica) Penguin Data
+* URL de Acesso no Kaggle: https://www.kaggle.com/datasets/parulpandey/palmer-archipelago-antarctica-penguin-data
+Dicionário de Dados (Principais Variáveis):
+* species: Espécie do pinguim (Adelie, Chinstrap ou Gentoo).
+* island: Ilha onde o pinguim foi observado (Biscoe, Dream ou Torgersen).
+* bill_length_mm: Comprimento do bico (culmen) do pinguim (em milímetros).
+* bill_depth_mm: Profundidade/espessura do bico do pinguim (em milímetros).
+* flipper_length_mm: Comprimento da nadadeira (em milímetros).
+* body_mass_g: Massa corporal do animal (em gramas).
+* sex: Sexo biológico do pinguim (male ou female).
+Objetivos do Sistema (Targets)
+* Variável-Alvo (Target): species (Classificação Multiclasse: Adelie, Chinstrap ou Gentoo).
+* Objetivo Principal: Identificar automaticamente a espécie do pinguim com base em suas características morfométricas físicas coletadas em campo, sem exigir análises genéticas laboratoriais.
+Descrição do Sistema
+O sistema atua como um assistente taxonômico automatizado para monitoramento ecológico no Arquipélago Palmer, na Antártida. A partir de medições biológicas simples — como comprimento e profundidade do bico, tamanho da nadadeira e peso —, a ferramenta aplica modelos de aprendizado de máquina supervisionado (como Random Forest, K-Nearest Neighbors ou Árvores de Decisão) para prever a qual espécie o animal pertence. O propósito principal é acelerar o trabalho de campo de pesquisadores e biólogos, viabilizando a catalogação rápida de espécimes e o estudo do impacto das mudanças climáticas nas populações da fauna antártica.
